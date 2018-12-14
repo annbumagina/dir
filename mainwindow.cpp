@@ -9,12 +9,28 @@
 #include <algorithm>
 #include <QThread>
 #include <QTreeWidget>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    ui->pushButton->setShortcut(QKeySequence(Qt::Key_Enter));
+
+    labelDupes = new QLabel(ui->statusBar);
+    labelDupes->setAlignment((Qt::AlignRight));
+    labelDupes->setMinimumSize(labelDupes->sizeHint());
+
+    thread = new QThread;
+    t = new Task();
+    t->moveToThread(thread);
+    connect(t, SIGNAL(send(std::vector< std::vector<QString> >)), this, SLOT(update(std::vector< std::vector<QString> >)));
+    connect(this, SIGNAL(started(QString)), t, SLOT(doWork(QString)));
+    connect(t, SIGNAL(scan_started()), this, SLOT(scan_started()));
+    connect(t, SIGNAL(scan_finished()), this, SLOT(scan_finished()));
+    connect(this, SIGNAL(cancel()), t, SLOT(cancel()), Qt::DirectConnection);
 }
 
 MainWindow::~MainWindow()
@@ -34,22 +50,33 @@ void MainWindow::update(std::vector< std::vector<QString> > vs) {
             item->addChild(child_item);
         }
     }
+}
 
+void MainWindow::scan_finished() {
+    labelDupes->setText("finished");
+}
+
+void MainWindow::scan_started() {
+    labelDupes->setText("doing");
+    ui->treeWidget->clear();
 }
 
 void MainWindow::on_pushButton_clicked()
 {
+    qDebug() << QString(__func__) << " from work thread: " << QThread::currentThreadId();
     QString text = ui->lineEdit->text();
 
-    QThread *thread = new QThread;
-    Task *t = new Task(text);
-    t->moveToThread(thread);
-    connect(t, SIGNAL(send(std::vector< std::vector<QString> >)), this, SLOT(update(std::vector< std::vector<QString> >)));
-    connect(thread, SIGNAL(started()), t, SLOT(doWork()));
     thread->start();
+    emit started(text);
 }
 
 void MainWindow::on_removeButton_clicked()
 {
 
+}
+
+void MainWindow::on_cancelButton_clicked()
+{
+    qDebug() << "wanted to finish\n";
+    emit cancel();
 }

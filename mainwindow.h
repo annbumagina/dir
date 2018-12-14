@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "task.h"
+#include <QLabel>
 #include <QMainWindow>
 #include <QString>
 
@@ -20,9 +22,19 @@ private slots:
     void on_pushButton_clicked();
     void on_removeButton_clicked();
     void update(std::vector< std::vector<QString> >);
+    void scan_finished();
+    void scan_started();
+    void on_cancelButton_clicked();
+
+signals:
+    void cancel();
+    void started(QString);
 
 private:
     Ui::MainWindow *ui;
+    QLabel * labelDupes;
+    QThread *thread;
+    Task *t;
 };
 
 #endif // MAINWINDOW_H
