@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QString>
 
 namespace Ui {
 class MainWindow;
@@ -17,8 +18,8 @@ public:
 
 private slots:
     void on_pushButton_clicked();
-
     void on_removeButton_clicked();
+    void update(std::vector< std::vector<QString> >);
 
 private:
     Ui::MainWindow *ui;
