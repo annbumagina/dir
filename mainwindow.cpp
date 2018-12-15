@@ -44,7 +44,9 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     emit cancel();
-    thread->quit();
+    thread->wait();
+    delete t;
+    delete thread;
     delete ui;
 }
 

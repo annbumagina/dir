@@ -49,10 +49,12 @@ void Task::doWork(QString dir) {
     while (it.hasNext()) {
         if (is_canceled) { emit finished("canceld"); return; }
         QString file_path = it.next();
-        if (it.fileInfo().isSymLink()) continue;
         QFile file(file_path);
         auto s = file.size();
-        t[s].push_back(file_path);
+        if (file.open(QIODevice::ReadOnly)) {
+            t[s].push_back(file_path);
+            file.close();
+        }
     }
 
     for (auto& u: t) {
