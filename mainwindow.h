@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QMainWindow>
 #include <QString>
+#include <memory>
 
 namespace Ui {
 class MainWindow;
@@ -40,7 +41,7 @@ signals:
 private:
     Ui::MainWindow *ui;
     QLabel * labelDupes;
-    QThread *thread;
+    std::unique_ptr<QThread> thread;
     Task *t;
     QString dir = "";
     bool removing = false;

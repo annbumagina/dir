@@ -13,10 +13,12 @@
 #include <QCommonStyle>
 #include <QFileDialog>
 #include <QTreeWidgetItemIterator>
+#include <memory>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    thread(new QThread)
 {
     ui->setupUi(this);
 
@@ -29,9 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
     labelDupes->setAlignment((Qt::AlignRight));
     labelDupes->setMinimumSize(labelDupes->sizeHint());
 
-    thread = new QThread;
-    t = new Task();
-    t->moveToThread(thread);
+    t = new Task;
+    t->moveToThread(thread.get());
     connect(t, SIGNAL(send(std::vector< std::vector<QString> >)), this, SLOT(update(std::vector< std::vector<QString> >)));
     connect(this, SIGNAL(started(QString)), t, SLOT(doWork(QString)));
     connect(this, SIGNAL(remove(std::vector<QString>)), t, SLOT(remove(std::vector<QString>)));
@@ -44,9 +45,9 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     emit cancel();
+    thread->quit();
     thread->wait();
     delete t;
-    delete thread;
     delete ui;
 }
 
