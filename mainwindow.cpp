@@ -10,6 +10,8 @@
 #include <QThread>
 #include <QTreeWidget>
 #include <QDebug>
+#include <QCommonStyle>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -17,7 +19,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->pushButton->setShortcut(QKeySequence(Qt::Key_Enter));
+    QCommonStyle style;
+    ui->select_directory->setIcon(style.standardIcon(QCommonStyle::SP_DialogOpenButton));
+    connect(ui->actionScan_Directory, &QAction::triggered, this, &MainWindow::on_select_directory_clicked);
+    ui->lineEdit->setReadOnly(true);
 
     labelDupes = new QLabel(ui->statusBar);
     labelDupes->setAlignment((Qt::AlignRight));
@@ -31,10 +36,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(t, SIGNAL(scan_started()), this, SLOT(scan_started()));
     connect(t, SIGNAL(scan_finished()), this, SLOT(scan_finished()));
     connect(this, SIGNAL(cancel()), t, SLOT(cancel()), Qt::DirectConnection);
+    thread->start();
 }
 
 MainWindow::~MainWindow()
 {
+    emit cancel();
+    thread->quit();
     delete ui;
 }
 
@@ -54,6 +62,7 @@ void MainWindow::update(std::vector< std::vector<QString> > vs) {
 
 void MainWindow::scan_finished() {
     labelDupes->setText("finished");
+    dir = "";
 }
 
 void MainWindow::scan_started() {
@@ -66,8 +75,14 @@ void MainWindow::on_pushButton_clicked()
     qDebug() << QString(__func__) << " from work thread: " << QThread::currentThreadId();
     QString text = ui->lineEdit->text();
 
-    thread->start();
-    emit started(text);
+    if (dir == "") {
+        dir = text;
+        emit started(text);
+    } else if (dir != text) {
+        emit cancel();
+        dir = text;
+        emit started(text);
+    }
 }
 
 void MainWindow::on_removeButton_clicked()
@@ -79,4 +94,13 @@ void MainWindow::on_cancelButton_clicked()
 {
     qDebug() << "wanted to finish\n";
     emit cancel();
+}
+
+
+
+void MainWindow::on_select_directory_clicked()
+{
+    QString dir = QFileDialog::getExistingDirectory(this, "Select Directory for Scanning",
+                                                    QString(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    ui->lineEdit->setText(dir);
 }

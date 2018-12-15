@@ -25,6 +25,7 @@ private slots:
     void scan_finished();
     void scan_started();
     void on_cancelButton_clicked();
+    void on_select_directory_clicked();
 
 signals:
     void cancel();
@@ -35,6 +36,7 @@ private:
     QLabel * labelDupes;
     QThread *thread;
     Task *t;
+    QString dir = "";
 };
 
 #endif // MAINWINDOW_H
