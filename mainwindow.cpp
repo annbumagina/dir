@@ -12,6 +12,7 @@
 #include <QDebug>
 #include <QCommonStyle>
 #include <QFileDialog>
+#include <QTreeWidgetItemIterator>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -33,8 +34,9 @@ MainWindow::MainWindow(QWidget *parent) :
     t->moveToThread(thread);
     connect(t, SIGNAL(send(std::vector< std::vector<QString> >)), this, SLOT(update(std::vector< std::vector<QString> >)));
     connect(this, SIGNAL(started(QString)), t, SLOT(doWork(QString)));
+    connect(this, SIGNAL(remove(std::vector<QString>)), t, SLOT(remove(std::vector<QString>)));
     connect(t, SIGNAL(scan_started()), this, SLOT(scan_started()));
-    connect(t, SIGNAL(scan_finished()), this, SLOT(scan_finished()));
+    connect(t, SIGNAL(finished(QString)), this, SLOT(finished(QString)));
     connect(this, SIGNAL(cancel()), t, SLOT(cancel()), Qt::DirectConnection);
     thread->start();
 }
@@ -55,14 +57,16 @@ void MainWindow::update(std::vector< std::vector<QString> > vs) {
         for (size_t j = 0; j < vs[i].size(); j++) {
             QTreeWidgetItem *child_item = new QTreeWidgetItem();
             child_item->setText(0, vs[i][j]);
+            child_item->setCheckState(2, Qt::Unchecked);
             item->addChild(child_item);
         }
     }
 }
 
-void MainWindow::scan_finished() {
-    labelDupes->setText("finished");
+void MainWindow::finished(QString message) {
+    labelDupes->setText(message);
     dir = "";
+    removing = false;
 }
 
 void MainWindow::scan_started() {
@@ -87,7 +91,30 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_removeButton_clicked()
 {
-
+    if (dir != "" || removing) return;
+    labelDupes->setText("doing");
+    removing = true;
+    std::vector<QString> s;
+    QTreeWidgetItemIterator it(ui->treeWidget, QTreeWidgetItemIterator::NoChildren);
+    std::vector<QTreeWidgetItem *> d;
+    while (*it) {
+        if ((*it)->checkState(2) == Qt::Checked) {
+            s.push_back((*it)->text(0));
+            qDebug() << (*it)->text(0) << '\n';
+            d.push_back(*it);
+        }
+        ++it;
+    }
+    for (auto c: d) {
+        int cnt = c->parent()->text(1).toInt() - 1;
+        c->parent()->setText(1, QString::number(cnt));
+        if (cnt == 0) {
+            delete c->parent();
+        } else {
+            delete c;
+        }
+    }
+    emit remove(s);
 }
 
 void MainWindow::on_cancelButton_clicked()
@@ -96,11 +123,42 @@ void MainWindow::on_cancelButton_clicked()
     emit cancel();
 }
 
-
-
 void MainWindow::on_select_directory_clicked()
 {
     QString dir = QFileDialog::getExistingDirectory(this, "Select Directory for Scanning",
                                                     QString(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     ui->lineEdit->setText(dir);
+}
+
+void MainWindow::on_expand_clicked()
+{
+    ui->treeWidget->expandAll();
+}
+
+void MainWindow::on_collapse_clicked()
+{
+    ui->treeWidget->collapseAll();
+}
+
+void MainWindow::on_clear_clicked()
+{
+    QTreeWidgetItemIterator it(ui->treeWidget, QTreeWidgetItemIterator::NoChildren);
+    while (*it) {
+        (*it)->setCheckState(2, Qt::Unchecked);
+        ++it;
+    }
+}
+
+
+void MainWindow::on_select_clicked()
+{
+    QTreeWidgetItemIterator it(ui->treeWidget, QTreeWidgetItemIterator::NoChildren);
+    while (*it) {
+        if ((*it)->parent()->indexOfChild(*it) != 0) {
+            (*it)->setCheckState(2, Qt::Checked);
+        } else {
+            (*it)->setCheckState(2, Qt::Unchecked);
+        }
+        ++it;
+    }
 }

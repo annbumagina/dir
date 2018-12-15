@@ -22,14 +22,20 @@ private slots:
     void on_pushButton_clicked();
     void on_removeButton_clicked();
     void update(std::vector< std::vector<QString> >);
-    void scan_finished();
+    void finished(QString);
     void scan_started();
     void on_cancelButton_clicked();
     void on_select_directory_clicked();
+    void on_expand_clicked();
+    void on_collapse_clicked();
+    void on_clear_clicked();
+
+    void on_select_clicked();
 
 signals:
     void cancel();
     void started(QString);
+    void remove(std::vector<QString>);
 
 private:
     Ui::MainWindow *ui;
@@ -37,6 +43,7 @@ private:
     QThread *thread;
     Task *t;
     QString dir = "";
+    bool removing = false;
 };
 
 #endif // MAINWINDOW_H

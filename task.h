@@ -12,9 +12,10 @@ public:
 public slots:
     void doWork(QString);
     void cancel();
+    void remove(std::vector<QString>);
 signals:
     void send(std::vector< std::vector<QString> >);
-    void scan_finished();
+    void finished(QString);
     void scan_started();
 private:
     std::vector< std::vector<QString> > equals;
