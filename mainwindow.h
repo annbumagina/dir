@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <QString>
 #include <memory>
+#include <QElapsedTimer>
 
 namespace Ui {
 class MainWindow;
@@ -45,6 +46,7 @@ private:
     Task *t;
     QString dir = "";
     bool removing = false;
+    QElapsedTimer *timer;
 };
 
 #endif // MAINWINDOW_H

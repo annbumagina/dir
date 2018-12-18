@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
     labelDupes->setMinimumSize(labelDupes->sizeHint());
 
     t = new Task;
+    timer = new QElapsedTimer;
     t->moveToThread(thread.get());
     connect(t, SIGNAL(send(std::vector< std::vector<QString> >)), this, SLOT(update(std::vector< std::vector<QString> >)));
     connect(this, SIGNAL(started(QString)), t, SLOT(doWork(QString)));
@@ -55,6 +56,7 @@ void MainWindow::update(std::vector< std::vector<QString> > vs) {
     ui->treeWidget->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     for (size_t i = 0; i < vs.size(); i++) {
         QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
+        std::sort(vs.begin(), vs.end());
         item->setText(0, vs[i][0]);
         item->setText(1, QString::number(vs[i].size()));
         for (size_t j = 0; j < vs[i].size(); j++) {
@@ -67,12 +69,15 @@ void MainWindow::update(std::vector< std::vector<QString> > vs) {
 }
 
 void MainWindow::finished(QString message) {
+    if (message == "finished")
+        message = message + " " + QString::number(timer->elapsed());
     labelDupes->setText(message);
     dir = "";
     removing = false;
 }
 
 void MainWindow::scan_started() {
+    timer->start();
     labelDupes->setText("doing");
     ui->treeWidget->clear();
 }
