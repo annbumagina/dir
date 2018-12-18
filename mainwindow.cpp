@@ -56,7 +56,7 @@ void MainWindow::update(std::vector< std::vector<QString> > vs) {
     ui->treeWidget->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     for (size_t i = 0; i < vs.size(); i++) {
         QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
-        std::sort(vs.begin(), vs.end());
+        std::sort(vs[i].begin(), vs[i].end());
         item->setText(0, vs[i][0]);
         item->setText(1, QString::number(vs[i].size()));
         for (size_t j = 0; j < vs[i].size(); j++) {
